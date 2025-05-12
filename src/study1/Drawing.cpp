@@ -34,6 +34,34 @@ auto Drawing::draw_electron_kinematics() -> void {
     Plotting::draw_hist1D(hist1D_phi, hist1D_phi_cut, m_path_electron, {.label = "#phi_{e} [deg.]"});
     Plotting::draw_hist1D(hist1D_theta, hist1D_theta_cut, m_path_electron, {.label = "#theta_{e} [deg.]"});
     Plotting::draw_hist1D(hist1D_vz, hist1D_vz_cut, m_path_electron, {.cuts = {vz_min_e, vz_max_e}, .label = "Vz_{e} [cm]"});
+
+
+    // Electron based kinematics ------------------------------------------------------------------
+    const std::shared_ptr<TH1D> hist1D_Q2 = m_histograms.electron.hist1D_Q2->Merge();
+    const std::shared_ptr<TH1D> hist1D_W = m_histograms.electron.hist1D_W->Merge();
+    const std::shared_ptr<TH1D> hist1D_xB = m_histograms.electron.hist1D_xB->Merge();
+    const std::shared_ptr<TH1D> hist1D_MM_eP = m_histograms.electron.hist1D_MM_eP->Merge();
+
+    Plotting::draw_hist1D(hist1D_Q2, m_path_electron, {.label = "Q2 [GeV^2]"});
+    Plotting::draw_hist1D(hist1D_W, m_path_electron, {.label = "W [GeV]"});
+    Plotting::draw_hist1D(hist1D_xB, m_path_electron, {.label = "xB"});
+    Plotting::draw_hist1D(hist1D_MM_eP, m_path_electron, {.label = "MM_{eP} [GeV^2]"});
+    // --------------------------------------------------------------------------------------------
+
+
+    // Delta phi ----------------------------------------------------------------------------------
+    const std::shared_ptr<TH1D> hist1D_delta_phi = m_histograms.electron.hist1D_delta_phi->Merge();
+    const std::shared_ptr<TH2D> hist2D_delta_phi_vs_phiElec = m_histograms.electron.hist2D_delta_phi_vs_phiElec->Merge();
+    
+    Plotting::draw_hist1D(hist1D_delta_phi, m_path_electron, {.label = "#Delta #phi [deg.]"});
+    Plotting::draw_hist2D(hist2D_delta_phi_vs_phiElec, m_path_electron, {.label_x = "#Delta #phi [deg.]", .label_y = "#phi_{e} [deg.]"});
+    // --------------------------------------------------------------------------------------------
+
+
+    // Proton variables ------------------------------------------------------------------
+    const std::shared_ptr<TH1D> hist1D_pp_calc = m_histograms.electron.hist1D_pp_calc->Merge();
+    Plotting::draw_hist1D(hist1D_pp_calc, m_path_electron, {.label = "p_{p} [GeV/c]"});
+    // --------------------------------------------------------------------------------------------
 }
 
 

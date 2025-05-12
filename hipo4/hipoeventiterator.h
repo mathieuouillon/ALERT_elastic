@@ -68,6 +68,10 @@ class hipoeventfile {
         }
         return it->second;
     }
+
+    dictionary& get_dictionary() {
+        return dict;
+    }
 };
 
 class hipoevent {
@@ -106,6 +110,9 @@ class hipoevent {
         return it->second;
     }
 
+    event* get_event_ptr() const {
+        return event_ptr;
+    }
     ///** Get a bank by numeric group and item tag from the current event. */
     //bank& getBank(const int group, const int item) const {
     //    if (!event_ptr || !file_ptr) throw std::runtime_error("Invalid HipoEvent (no event data)");

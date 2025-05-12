@@ -34,7 +34,10 @@
 # Folders
 .vscode/
 .idea/
+.cache/
 build/
 builddir/
 bin/
 plots/
+hipo_out/
+output/

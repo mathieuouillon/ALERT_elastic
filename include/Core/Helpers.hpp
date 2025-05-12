@@ -21,6 +21,7 @@
 #include <Core/Constantes.hpp>
 #include <Core/Particle.hpp>
 #include <Core/Runs.hpp>
+#include "TMath.h"
 
 namespace Core {
 
@@ -374,6 +375,33 @@ inline auto select_runs(const std::vector<std::string>& runs, const std::vector<
 
     // Convert the filtered view into a vector.
     return std::vector<std::string>(filtered.begin(), filtered.end());
+}
+
+template <typename T>
+inline auto to_radians(T angle) -> T {
+    return angle * TMath::Pi() / 180.0;
+}
+
+template <typename T>
+inline auto to_degrees(T angle) -> T {
+    return angle * 180.0 / TMath::Pi();
+}
+
+inline auto phi_to_range(double phi) -> double {
+    return std::atan2(std::sin(phi), std::cos(phi));
+}
+
+inline auto get_info_superlayer(const int ahdc_superlayer) -> std::pair<int, double> {
+    switch (ahdc_superlayer) {
+        case 0: return {47, 32.0};
+        case 1: return {56, 38.0};
+        case 2: return {72, 48.0};
+        case 3: return {87, 58.0};
+        case 4: return {99, 68.0};
+        default:
+            std::cerr << "Invalid superlayer: " << ahdc_superlayer << std::endl;
+            return {0, 0.0};
+    }
 }
 
 }  // namespace Core

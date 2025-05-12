@@ -16,13 +16,27 @@ struct Electron {
     up_TTO_TH1D hist1D_phi = std::make_unique<TTO_TH1D>("phi_e", "", 200, -190, 190);
     up_TTO_TH1D hist1D_theta = std::make_unique<TTO_TH1D>("theta_e", "", 200, 0, 35);
     up_TTO_TH1D hist1D_chi2 = std::make_unique<TTO_TH1D>("chi2_e", "", 200, -6, 6);
-    up_TTO_TH1D hist1D_vz = std::make_unique<TTO_TH1D>("vz_e", "", 200, -30, 20);
+    up_TTO_TH1D hist1D_vz = std::make_unique<TTO_TH1D>("vz_e", "", 200, -50, 40);
 
     up_TTO_TH1D hist1D_p_cut = std::make_unique<TTO_TH1D>("p_e_cut", "", 200, 0, 11);
     up_TTO_TH1D hist1D_phi_cut = std::make_unique<TTO_TH1D>("phi_e_cut", "", 200, -190, 190);
     up_TTO_TH1D hist1D_theta_cut = std::make_unique<TTO_TH1D>("theta_e_cut", "", 200, 0, 35);
     up_TTO_TH1D hist1D_chi2_cut = std::make_unique<TTO_TH1D>("chi2_e_cut", "", 200, -6, 6);
-    up_TTO_TH1D hist1D_vz_cut = std::make_unique<TTO_TH1D>("vz_e_cut", "", 200, -30, 20);
+    up_TTO_TH1D hist1D_vz_cut = std::make_unique<TTO_TH1D>("vz_e_cut", "", 200, -50, 40);
+
+    up_TTO_TH1D hist1D_Q2 = std::make_unique<TTO_TH1D>("Q2", "", 200, 0, 1);
+    up_TTO_TH1D hist1D_W = std::make_unique<TTO_TH1D>("W", "", 200, 0, 2.5);
+    up_TTO_TH1D hist1D_xB = std::make_unique<TTO_TH1D>("xB", "", 200, 0, 1.2);
+    up_TTO_TH1D hist1D_MM_eP = std::make_unique<TTO_TH1D>("MM_eP", "", 200, -0.5, 2.5); 
+
+    up_TTO_TH1D hist1D_pp_calc = std::make_unique<TTO_TH1D>("pp_calc", "", 200, 0, 2);
+
+    up_TTO_TH1D hist1D_delta_phi = std::make_unique<TTO_TH1D>("delta_phi", "", 200, -360, 360);
+    up_TTO_TH1D hist1D_delta_phi_ATOF = std::make_unique<TTO_TH1D>("delta_phi_ATOF", "", 200, -360, 360);
+    up_TTO_TH1D hist1D_delta_phi_cut = std::make_unique<TTO_TH1D>("delta_phi_cut", "", 200, -360, 360);
+
+    up_TTO_TH2D hist2D_delta_phi_vs_phiElec= std::make_unique<TTO_TH2D>("delta_phi_vs_phiElec", "", 200, -360, 360, 200, -360, 360);
+
 };
 
 struct Histograms {
