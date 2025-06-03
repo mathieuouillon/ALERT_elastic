@@ -20,12 +20,12 @@ toml_dep = toml.get_variable('tomlplusplus_dep')
 subdir('hipo4')
 
 #── ROOT via root-config ─────────────────────────────────────────────────────#
-root_incdir   = run_command('root-config', '--incdir', check: true).stdout().strip()
-root_libs     = run_command('root-config', '--libs',   check: true).stdout().strip().split()
+root_incdir = run_command('root-config', '--incdir', check: true).stdout().strip()
+root_libs = run_command('root-config', '--libs', check: true).stdout().strip().split()
 
 root_dep = declare_dependency(
   include_directories: include_directories(root_incdir),
-  link_args:           root_libs,
+  link_args: root_libs,
 )
 
 #── Project sources & include dirs ────────────────────────────────────────────#
@@ -37,6 +37,8 @@ sources = files(
   'src/main.cpp',
   'src/study1/Drawing.cpp',
   'src/study1/Reader.cpp',
+
+  'src/study2/Reader.cpp',
 )
 
 executable(

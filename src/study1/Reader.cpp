@@ -1,5 +1,6 @@
 #include <set>
 #include <study1/Reader.hpp>
+#include "fmt/base.h"
 
 namespace study1 {
 
@@ -22,6 +23,14 @@ auto Reader::operator()(const std::string& file) -> void {
 
     std::vector<std::string> dst_schema = {"AHDC::adc", "RUN::config", "RUN::scaler", "REC::Event", "REC::Particle", "REC::Calorimeter",
                                            "REC::ForwardTagger", "REC::Scintillator", "REC::Track", "REC::CovMat", "REC::Traj", "REC::Cherenkov", "RUN::config", "RUN::rf"};
+
+
+
+    hipo::schema schemaPart("ELASTIC::Electron", 100, 1);
+    schemaPart.parse("pid/S,px/F,py/F,pz/F");
+    writer.getDictionary().addSchema(schemaPart);
+
+
 
     const std::filesystem::path path = file;
     const std::string name = path.filename().string();
@@ -72,12 +81,17 @@ auto Reader::operator()(const std::string& file) -> void {
             if (2000 <= std::abs(electron.status()) && std::abs(electron.status()) < 4000) electrons_in_fd.push_back(electron);
         }
 
-        // electrons.insert(electrons.end(), photons_in_ft.begin(), photons_in_ft.end());
+        std::vector<Core::Particle> electrons_in_ft;
+        for (auto& electron : electrons) {
+            if (1000 <= std::abs(electron.status()) && std::abs(electron.status()) < 2000) electrons_in_ft.push_back(electron);
+        }
+
+        // electrons_in_ft.insert(electrons_in_ft.end(), photons_in_ft.begin(), photons_in_ft.end());
 
         int nb_elastic = 0;
         std::vector<Core::Particle> elastic_electrons;
 
-        for (auto& electron : electrons) {
+        for (auto& electron : electrons_in_ft) {
             if (select_electron(electron)) {
                 double E = electron.E();
                 double Ebeam = 2.23951;
@@ -91,14 +105,14 @@ auto Reader::operator()(const std::string& file) -> void {
                 double MM_eP = (beam + p1 - k2).M2();
 
                 m_histograms.electron.hist1D_W->Get()->Fill(W);
+                m_histograms.electron.hist1D_MM_eP->Get()->Fill(MM_eP);
 
-                if (0.9 < W && W < 1.12) {
+                if (0.8 < W && W < 1.12) {
                     nb_elastic++;
                     elastic_electrons.push_back(electron);
 
                     m_histograms.electron.hist1D_Q2->Get()->Fill(Q2);
                     m_histograms.electron.hist1D_xB->Get()->Fill(xB);
-                    m_histograms.electron.hist1D_MM_eP->Get()->Fill(MM_eP);
 
                     // Expected proton variables
                     double mass = 0.938272;
@@ -139,15 +153,23 @@ auto Reader::operator()(const std::string& file) -> void {
 
             double adcOffset = AHDC_adc.get<float>("ped", i);
 
+            m_histograms.electron.hist1D_adc->Get()->Fill(ADC);
+            m_histograms.electron.hist1D_t->Get()->Fill(leadingEdgeTime);
+            m_histograms.electron.hist1D_tot->Get()->Fill(timeOverThreshold);
+            m_histograms.electron.hist1D_ped->Get()->Fill(adcOffset);
+
             double adc = ADC;
             double adc_min = 0;
             double adc_max = 4095;
             double t_min = 200;
-            double t_max = 500;
+            // double t_max = 500;
+            double t_max = 1000;
+            // TODO: Should be 1000 for FT, base is 500.
             double tot_min = 350;
             double tot_max = 600;
             double ped_min = 180;
             double ped_max = 360;
+            // TODO: Theses values work only for FD not FT.
             if (!((adc >= adc_min) && (adc <= adc_max) && (leadingEdgeTime >= t_min) && (leadingEdgeTime <= t_max) && (timeOverThreshold >= tot_min) && (timeOverThreshold <= tot_max) && (adcOffset >= ped_min) && (adcOffset <= ped_max))) continue;
             //if (ahdc_superlayer != 0) continue;
 
@@ -166,15 +188,25 @@ auto Reader::operator()(const std::string& file) -> void {
 
             Line3D line({x_start, y_start, -300.0 / 2}, {x_end, y_end, 300.0 / 2});
             auto [x, y, z] = line.lerp((elastic_electron.vz() * 10 + 230) / 300);
-            double phi = x == 0.0 && y == 0.0 ? 0.0 : TMath::ATan2(y, x);
-            double phiX = Core::phi_to_range(Core::to_radians(elastic_electron.phi()) + TMath::Pi());
-            double delta_phi = Core::phi_to_range(phi - phiX);
+            auto [x1, y1, z1] = line.get_point_at_z(30);
 
-            m_histograms.electron.hist1D_delta_phi->Get()->Fill(Core::to_degrees(delta_phi));
-            m_histograms.electron.hist2D_delta_phi_vs_phiElec->Get()->Fill(Core::to_degrees(delta_phi), elastic_electron.phi());
+            double phi = x1 == 0.0 && y1 == 0.0 ? 0.0 : TMath::ATan2(y1, x1);
+            // double phiX = Core::phi_to_range(Core::to_radians(elastic_electron.phi()) + TMath::Pi());
+            // double delta_phi = Core::phi_to_range(phi - phiX);
+            double phiX = (Core::to_radians(elastic_electron.phi()));
+            double delta_phi = Core::to_degrees(phi - phiX);
 
-            if (std::abs(delta_phi) < 220.0) {
+            m_histograms.electron.hist1D_delta_phi->Get()->Fill(delta_phi);
+            m_histograms.electron.hist2D_delta_phi_vs_phiElec->Get()->Fill(delta_phi, elastic_electron.phi());
+
+            //if (std::abs(delta_phi) < 20.0) {
+            if ((-200 < delta_phi && delta_phi < -150.0) || (150 < delta_phi && delta_phi < 200.0)) {
                 m_histograms.electron.hist1D_delta_phi_cut->Get()->Fill(Core::to_degrees(delta_phi));
+
+                m_histograms.electron.hist1D_adc_cut->Get()->Fill(ADC);
+                m_histograms.electron.hist1D_t_cut->Get()->Fill(leadingEdgeTime);
+                m_histograms.electron.hist1D_tot_cut->Get()->Fill(timeOverThreshold);
+                m_histograms.electron.hist1D_ped_cut->Get()->Fill(adcOffset);
 
                 is_a_good_event = true;
                 nb_of_good_events++;
@@ -240,6 +272,14 @@ auto Reader::operator()(const std::string& file) -> void {
                     outEvent.addStructure(bank);
                 }
             }
+
+            hipo::bank partBank(schemaPart, 1);
+
+            partBank.putInt("pid", 0, 11);
+            partBank.putFloat("px", 0, elastic_electron.px());
+            partBank.putFloat("py", 0, elastic_electron.py());
+            partBank.putFloat("pz", 0, elastic_electron.pz());
+            outEvent.addStructure(partBank);
 
             writer.addEvent(outEvent);
         }

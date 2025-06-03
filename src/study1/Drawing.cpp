@@ -62,6 +62,28 @@ auto Drawing::draw_electron_kinematics() -> void {
     const std::shared_ptr<TH1D> hist1D_pp_calc = m_histograms.electron.hist1D_pp_calc->Merge();
     Plotting::draw_hist1D(hist1D_pp_calc, m_path_electron, {.label = "p_{p} [GeV/c]"});
     // --------------------------------------------------------------------------------------------
+
+
+    // AHDC variables ------------------------------------------------------------------
+    const std::shared_ptr<TH1D> hist1D_adc = m_histograms.electron.hist1D_adc->Merge();
+    const std::shared_ptr<TH1D> hist1D_t = m_histograms.electron.hist1D_t->Merge();
+    const std::shared_ptr<TH1D> hist1D_tot = m_histograms.electron.hist1D_tot->Merge();
+    const std::shared_ptr<TH1D> hist1D_ped = m_histograms.electron.hist1D_ped->Merge();
+
+    const std::shared_ptr<TH1D> hist1D_adc_cut = m_histograms.electron.hist1D_adc_cut->Merge();
+    const std::shared_ptr<TH1D> hist1D_t_cut = m_histograms.electron.hist1D_t_cut->Merge();
+    const std::shared_ptr<TH1D> hist1D_tot_cut = m_histograms.electron.hist1D_tot_cut->Merge();
+    const std::shared_ptr<TH1D> hist1D_ped_cut = m_histograms.electron.hist1D_ped_cut->Merge();
+
+    Plotting::draw_hist1D(hist1D_adc, m_path_electron, {.label = "ADC"});
+    Plotting::draw_hist1D(hist1D_t, m_path_electron, {.label = "t [ns]"});
+    Plotting::draw_hist1D(hist1D_tot, m_path_electron, {.label = "TOT [ns]"});
+    Plotting::draw_hist1D(hist1D_ped, m_path_electron, {.label = "ped"});
+
+    Plotting::draw_hist1D(hist1D_adc_cut, m_path_electron, {.label = "ADC"});
+    Plotting::draw_hist1D(hist1D_t_cut, m_path_electron, {.label = "t [ns]"});
+    Plotting::draw_hist1D(hist1D_tot_cut, m_path_electron, {.label = "TOT [ns]"});
+    Plotting::draw_hist1D(hist1D_ped_cut, m_path_electron, {.label = "ped"});
 }
 
 

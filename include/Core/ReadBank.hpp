@@ -252,4 +252,55 @@ inline auto read_Traj_bank(const hipo::bank& REC_Traj, const int pindex) -> DCTr
     return output;
 }
 
+
+struct ScintillatorBank {
+    int index = std::numeric_limits<int>::quiet_NaN();
+    int pindex = std::numeric_limits<int>::quiet_NaN();
+    int detector = std::numeric_limits<int>::quiet_NaN();
+    int sector = std::numeric_limits<int>::quiet_NaN();
+    int layer = std::numeric_limits<int>::quiet_NaN();
+    int component = std::numeric_limits<int>::quiet_NaN();
+    float energy = std::numeric_limits<float>::quiet_NaN();
+    float time = std::numeric_limits<float>::quiet_NaN();
+    float path = std::numeric_limits<float>::quiet_NaN();
+    float chi2 = std::numeric_limits<float>::quiet_NaN();
+    float x = std::numeric_limits<float>::quiet_NaN();
+    float y = std::numeric_limits<float>::quiet_NaN();
+    float z = std::numeric_limits<float>::quiet_NaN();
+    float hx = std::numeric_limits<float>::quiet_NaN();
+    float hy = std::numeric_limits<float>::quiet_NaN();
+    float hz = std::numeric_limits<float>::quiet_NaN();
+    int status = std::numeric_limits<float>::quiet_NaN();
+};
+
+inline auto read_Scintillator_bank(const hipo::bank& REC_Scintillator, const int pindex) -> ScintillatorBank {
+    auto map = load_bank_by_index(REC_Scintillator, "pindex");
+    ScintillatorBank output;
+
+    if (!map.contains(pindex)) return output;
+
+    for (int i : map.at(pindex)) {
+        if (REC_Scintillator.get<int>("detector", i) != 12 && REC_Scintillator.get<int>("layer", i) == 2) continue;
+        output.index = REC_Scintillator.get<int>("index", i);
+        output.pindex = REC_Scintillator.get<int>("pindex", i);
+        output.detector = REC_Scintillator.get<int>("detector", i);
+        output.sector = REC_Scintillator.get<int>("sector", i);
+        output.layer = REC_Scintillator.get<int>("layer", i);
+        output.component = REC_Scintillator.get<int>("component", i);
+        output.energy = REC_Scintillator.get<float>("energy", i);
+        output.time = REC_Scintillator.get<float>("time", i);
+        output.path = REC_Scintillator.get<float>("path", i);
+        output.chi2 = REC_Scintillator.get<float>("chi2", i);
+        output.x = REC_Scintillator.get<float>("x", i);
+        output.y = REC_Scintillator.get<float>("y", i);
+        output.z = REC_Scintillator.get<float>("z", i);
+        output.hx = REC_Scintillator.get<float>("hx", i);
+        output.hy = REC_Scintillator.get<float>("hy", i);
+        output.hz = REC_Scintillator.get<float>("hz", i);
+        output.status = REC_Scintillator.get<int>("status", i);
+    }
+
+    return output;
+}
+
 }  // namespace Core
