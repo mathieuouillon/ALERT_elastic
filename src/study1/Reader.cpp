@@ -1,3 +1,5 @@
+#include <cstddef>
+#include <cstdlib>
 #include <set>
 #include <study1/Reader.hpp>
 #include "fmt/base.h"
@@ -11,7 +13,7 @@ Reader::Reader(Histograms& histograms, const toml::parse_result& config, Counter
 Reader::~Reader() = default;
 
 auto Reader::operator()(const std::string& file) -> void {
-    bool write = true;
+    bool write = false;
     // fmt::print("Processing file: {}\n", file);
     hipo::hipoeventfile events(file);
 
@@ -86,41 +88,55 @@ auto Reader::operator()(const std::string& file) -> void {
             if (1000 <= std::abs(electron.status()) && std::abs(electron.status()) < 2000) electrons_in_ft.push_back(electron);
         }
 
+        
         // electrons_in_ft.insert(electrons_in_ft.end(), photons_in_ft.begin(), photons_in_ft.end());
-
+        double pp_calc = - 999;
+        double expected_time = -999;
         int nb_elastic = 0;
         std::vector<Core::Particle> elastic_electrons;
 
-        for (auto& electron : electrons_in_ft) {
+        for (auto& electron : electrons_in_fd) {
             if (select_electron(electron)) {
+                double M = 3.72741;
+                // double M = 0.938272; // Proton mass in GeV/c^2
                 double E = electron.E();
                 double Ebeam = 2.23951;
                 double Q2 = 2.0 * E * Ebeam * (1.0 - std::cos(electron.theta() * M_PI / 180.0));
-                double W = std::sqrt(0.938272 * 0.938272 + 2.0 * 0.938272 * (Ebeam - E) - Q2);
-                double xB = Q2 / (2.0 * 0.938272 * (Ebeam - E));
+                double W = std::sqrt(M * M + 2.0 * M * (Ebeam - E) - Q2);
+                double xB = Q2 / (2.0 * M * (Ebeam - E));
 
                 ROOT::Math::PxPyPzEVector beam(0.0, 0.0, Ebeam, Ebeam);
                 ROOT::Math::PxPyPzEVector k2 = electron.PxPyPzEVector();
-                ROOT::Math::PxPyPzEVector p1 = {0, 0, 0, 0.938272};
+                ROOT::Math::PxPyPzEVector p1 = {0, 0, 0, M};
                 double MM_eP = (beam + p1 - k2).M2();
 
                 m_histograms.electron.hist1D_W->Get()->Fill(W);
                 m_histograms.electron.hist1D_MM_eP->Get()->Fill(MM_eP);
 
-                if (0.8 < W && W < 1.12) {
+                // fmt::println("MM_eP: {}, W: {}, Q2: {}, xB: {}", MM_eP, W, Q2, xB);
+
+                if (0.8 < W && W < 8) {
                     nb_elastic++;
                     elastic_electrons.push_back(electron);
 
                     m_histograms.electron.hist1D_Q2->Get()->Fill(Q2);
                     m_histograms.electron.hist1D_xB->Get()->Fill(xB);
 
-                    // Expected proton variables
-                    double mass = 0.938272;
+                    double mass = M;
                     double El_Theta = electron.theta();
                     double pe_calc = Ebeam / (1 + (Ebeam / mass) * (1 - cos(El_Theta * TMath::Pi() / 180.)));
-                    double pp_calc = pe_calc * TMath::Sqrt(pow((1 + Ebeam / mass), 2) * pow((1 - cos(El_Theta * TMath::Pi() / 180.)), 2) + pow(sin(El_Theta * TMath::Pi() / 180.), 2));
+                    pp_calc = pe_calc * TMath::Sqrt(pow((1 + Ebeam / mass), 2) * pow((1 - cos(El_Theta * TMath::Pi() / 180.)), 2) + pow(sin(El_Theta * TMath::Pi() / 180.), 2));
 
                     m_histograms.electron.hist1D_pp_calc->Get()->Fill(pp_calc);
+
+
+                    // Compute the expected time of flight
+                    double beta = pp_calc / std::sqrt(pp_calc * pp_calc + mass * mass);
+                    double gamma = 1.0 / std::sqrt(1.0 - beta * beta);
+                    double E = std::sqrt(pp_calc * pp_calc + mass * mass);
+                    expected_time = E / (beta * 299792458.0) * 1e9; // in nanoseconds
+
+
                 }
             }
         }
@@ -135,6 +151,78 @@ auto Reader::operator()(const std::string& file) -> void {
         hipo::bank& AHDC_aiprediction = event.get_bank("AHDC::ai:prediction");
         hipo::bank& AHDC_Track = event.get_bank("AHDC::track");
         hipo::bank& ATOF_hits = event.get_bank("ATOF::hits");
+        hipo::bank& ATOF_clusters = event.get_bank("ATOF::clusters");
+        hipo::bank& ATOF_tdc = event.get_bank("ATOF::tdc");
+
+
+        for (int i = 0; i < ATOF_tdc.getRows(); i++) {
+            int sector = ATOF_tdc.getInt("sector", i);
+            int layer = ATOF_tdc.getInt("layer", i);
+            int component = ATOF_tdc.getInt("component", i);
+            int order = ATOF_tdc.getInt("order", i);
+            int tdc = ATOF_tdc.getInt("TDC", i);
+            int tot = ATOF_tdc.getInt("ToT", i);
+
+            // fmt::println("ATOF: sector: {}, layer: {}, component: {}, order: {}, tdc: {}, tot: {}", 
+            //     sector, layer, component, order, tdc, tot);
+
+            m_histograms.electron.hist1D_ATOF_tdc->Get()->Fill(tdc);
+            m_histograms.electron.hist1D_ATOF_tot->Get()->Fill(tot);
+            m_histograms.electron.hist2D_ATOF_tdc_vs_tot->Get()->Fill(tdc, tot);
+
+        }
+
+
+        for (int i = 0; i < ATOF_hits.getRows(); i++) {
+            int id = ATOF_hits.get<int>("id", i);
+            float time = ATOF_hits.get<float>("time", i);
+            float x = ATOF_hits.get<float>("x", i);
+            float y = ATOF_hits.get<float>("y", i);
+            float z = ATOF_hits.get<float>("z", i);
+            float energy = ATOF_hits.get<float>("energy", i);
+
+            // m_histograms.electron.hist2D_ATOF_energy_vs_time->Get()->Fill(time, energy);
+            // m_histograms.electron.hist2D_pe_calc_vs_ATOF_time->Get()->Fill(pp_calc, time);
+            // m_histograms.electron.hist2D_pe_calc_vs_ATOF_energy->Get()->Fill(pp_calc, energy);
+            // m_histograms.electron.hist2D_tof_vs_ATOF_energy->Get()->Fill(expected_time, energy);
+            // m_histograms.electron.hist2D_tof_vs_ATOF_time->Get()->Fill(expected_time, time);
+
+            // fmt::println("p: {}, time: {}, energy; {}",pp_calc, time, energy);
+
+            // fmt::println("ATOF: id: {}, n_bar: {}, n_wedge: {}, time: {}, x: {}, y: {}, z: {}, energy: {}, path_length: {}, inpath_length: {}", 
+            //     id, n_bar, n_wedge, time, x, y, z, energy, path_length, inpath_length);
+
+        }
+
+        
+        for (int i = 0; i < ATOF_clusters.getRows(); i++) {
+            int id = ATOF_clusters.get<int>("id", i);
+            int n_bar = ATOF_clusters.get<int>("n_bar", i);
+            int n_wedge = ATOF_clusters.get<int>("n_wedge", i);
+            float time = ATOF_clusters.get<float>("time", i);
+            float x = ATOF_clusters.get<float>("x", i);
+            float y = ATOF_clusters.get<float>("y", i);
+            float z = ATOF_clusters.get<float>("z", i);
+            float energy = ATOF_clusters.get<float>("energy", i);
+            float path_length = ATOF_clusters.get<float>("pathlength", i);
+            float inpath_length = ATOF_clusters.get<float>("inpathlength", i);
+
+            // m_histograms.electron.hist2D_ATOF_energy_vs_time->Get()->Fill(time, energy);
+
+            m_histograms.electron.hist2D_ATOF_energy_vs_time->Get()->Fill(time, energy);
+            m_histograms.electron.hist2D_pe_calc_vs_ATOF_time->Get()->Fill(pp_calc, time);
+            m_histograms.electron.hist2D_pe_calc_vs_ATOF_energy->Get()->Fill(pp_calc, energy);
+            m_histograms.electron.hist2D_tof_vs_ATOF_energy->Get()->Fill(expected_time, energy);
+            m_histograms.electron.hist2D_tof_vs_ATOF_time->Get()->Fill(expected_time, time);
+
+            // fmt::println("ATOF: id: {}, n_bar: {}, n_wedge: {}, time: {}, x: {}, y: {}, z: {}, energy: {}, path_length: {}, inpath_length: {}", 
+            //     id, n_bar, n_wedge, time, x, y, z, energy, path_length, inpath_length);
+
+        }
+        
+
+
+
 
         if (AHDC_adc.getRows() == 0) continue;
         for (int i = 0; i < AHDC_adc.getRows(); i++) {
@@ -195,6 +283,10 @@ auto Reader::operator()(const std::string& file) -> void {
             // double delta_phi = Core::phi_to_range(phi - phiX);
             double phiX = (Core::to_radians(elastic_electron.phi()));
             double delta_phi = Core::to_degrees(phi - phiX);
+
+            delta_phi = std::abs(delta_phi) - 180;
+
+
 
             m_histograms.electron.hist1D_delta_phi->Get()->Fill(delta_phi);
             m_histograms.electron.hist2D_delta_phi_vs_phiElec->Get()->Fill(delta_phi, elastic_electron.phi());

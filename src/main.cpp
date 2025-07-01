@@ -31,8 +31,9 @@
 
 #include <study2/Histograms.hpp>
 #include <study2/Reader.hpp>
+#include "fmt/base.h"
 
-int main() {
+void study2_main() {
     ROOT::EnableThreadSafety();  // To stop random errors in multithread mode2
 
     std::vector<std::string> files = Core::read_recursive_file_in_directory("/volatile/clas12/rg-l/production/auto-pass0/v1/mon/recon/021787/");
@@ -53,7 +54,7 @@ int main() {
 
 }
 
-int elastic_proton() {
+int main() {
     ROOT::EnableThreadSafety();  // To stop random errors in multithread mode
 
     std::vector<double> times;
@@ -64,9 +65,14 @@ int elastic_proton() {
     const toml::table config = toml::parse_file("../config/study1.toml");
 
     // Read the files
-    std::vector<std::string> files = Core::read_recursive_file_in_directory("/volatile/clas12/ouillon/AI_ALERT/test_workflow-ALERT-data-2/recon/");
+    std::vector<std::string> files = Core::read_recursive_file_in_directory("/volatile/clas12/ouillon/AI_ALERT/test_workflow-ALERT-data-3/recon/");
     // std::vector<std::string> files = Core::read_recursive_file_in_directory("/volatile/clas12/rg-l/production/auto-pass0/v1/mon/recon/021400/");
     // files.resize(static_cast<int>(20.f / 100 * files.size()));
+
+    fmt::println("First ten files:");
+    for (const auto& file : files | std::views::take(10)) {
+        fmt::print("{}\n", file);
+    }
 
     fmt::print("Number of files: {}\n", files.size());
 
@@ -74,7 +80,7 @@ int elastic_proton() {
     study1::Counter counter;
     study1::Histograms histograms;
     study1::Reader reader(histograms, config, counter, {11, 22});
-    multithread_reader(reader, files, 10);
+    multithread_reader(reader, files, 20);
 
     study1::Drawing drawing(histograms, config);
     drawing.draw_electron_kinematics();

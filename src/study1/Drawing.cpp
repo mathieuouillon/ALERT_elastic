@@ -84,6 +84,32 @@ auto Drawing::draw_electron_kinematics() -> void {
     Plotting::draw_hist1D(hist1D_t_cut, m_path_electron, {.label = "t [ns]"});
     Plotting::draw_hist1D(hist1D_tot_cut, m_path_electron, {.label = "TOT [ns]"});
     Plotting::draw_hist1D(hist1D_ped_cut, m_path_electron, {.label = "ped"});
+
+
+    // ATOF variables ------------------------------------------------------------------
+
+    const std::shared_ptr<TH2D> hist2D_ATOF_energy_vs_time = m_histograms.electron.hist2D_ATOF_energy_vs_time->Merge();
+    Plotting::draw_hist2D(hist2D_ATOF_energy_vs_time, m_path_electron, {.label_x = "time [ns]", .label_y = "energy [MeV]"});
+
+
+    const std::shared_ptr<TH1D> hist1D_ATOF_tdc = m_histograms.electron.hist1D_ATOF_tdc->Merge();
+    const std::shared_ptr<TH1D> hist1D_ATOF_tot = m_histograms.electron.hist1D_ATOF_tot->Merge();
+    const std::shared_ptr<TH2D> hist2D_ATOF_tdc_vs_tot = m_histograms.electron.hist2D_ATOF_tdc_vs_tot->Merge();
+    Plotting::draw_hist1D(hist1D_ATOF_tdc, m_path_electron, {.label = "ATOF TDC [ns]"});
+    Plotting::draw_hist1D(hist1D_ATOF_tot, m_path_electron, {.label = "ATOF ToT [ns]"});
+    Plotting::draw_hist2D(hist2D_ATOF_tdc_vs_tot, m_path_electron, {.label_x = "ATOF TDC [ns]", .label_y = "ATOF ToT [ns]"});
+
+
+    const std::shared_ptr<TH2D> hist2D_pe_calc_vs_ATOF_time = m_histograms.electron.hist2D_pe_calc_vs_ATOF_time->Merge();
+    const std::shared_ptr<TH2D> hist2D_pe_calc_vs_ATOF_energy = m_histograms.electron.hist2D_pe_calc_vs_ATOF_energy->Merge();
+    const std::shared_ptr<TH2D> hist2D_tof_vs_ATOF_energy = m_histograms.electron.hist2D_tof_vs_ATOF_energy->Merge();
+    const std::shared_ptr<TH2D> hist2D_tof_vs_ATOF_time = m_histograms.electron.hist2D_tof_vs_ATOF_time->Merge();
+    Plotting::draw_hist2D(hist2D_pe_calc_vs_ATOF_time, m_path_electron, {.label_x = "p_{4He}^{calc} [GeV/c]", .label_y = "ATOF time [ns]"});
+    Plotting::draw_hist2D(hist2D_pe_calc_vs_ATOF_energy, m_path_electron, {.label_x = "p_{4He}^{calc} [GeV/c]", .label_y = "ATOF energy [MeV]"});
+    Plotting::draw_hist2D(hist2D_tof_vs_ATOF_energy, m_path_electron, {.label_x = "expected time [ns]", .label_y = "ATOF energy [MeV]"});
+    Plotting::draw_hist2D(hist2D_tof_vs_ATOF_time, m_path_electron, {.label_x = "expected time [ns]", .label_y = "ATOF time [ns]"});
+
+
 }
 
 
